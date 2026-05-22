@@ -1,0 +1,123 @@
+name: dabs-pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  BUNDLE_ROOT: .
+  BUNDLE_TARGET: dev
+
+jobs:
+  validate:
+    name: Validate bundle
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Validate Databricks Asset Bundle
+        # DABS principle: validate configuration early so infrastructure and code stay aligned.
+        run: databricks bundle validate --target ${BUNDLE_TARGET}
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
+      - name: Lint pipeline source placeholder
+        # Extension point: replace with ruff, pytest, mypy, or project-specific checks.
+        run: python -m py_compile src/demo_etl_genie_github_pipeline.py
+
+  build:
+    name: Build deployment metadata
+    runs-on: ubuntu-latest
+    needs:
+      - validate
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Generate deployment summary
+        # DABS principle: keep build artifacts reproducible and promotion-friendly.
+        run: |
+          mkdir -p dist
+          printf 'bundle_target=%s\n' "${BUNDLE_TARGET}" > dist/build-metadata.txt
+          printf 'pipeline=demo_etl_genie_github\n' >> dist/build-metadata.txt
+          printf 'resource=resources/demo_etl_genie_github.pipeline.yml\n' >> dist/build-metadata.txt
+
+      - name: Upload build metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-build-metadata
+          path: dist/build-metadata.txt
+
+  deploy_dev:
+    name: Deploy to dev
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    if: github.event_name != 'pull_request'
+    environment: dev
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Deploy bundle to dev
+        # DABS principle: deploy declaratively from versioned bundle state.
+        run: databricks bundle deploy --target dev
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
+      - name: Run dev pipeline update
+        # Extension point: remove this step if promotion should only deploy definitions.
+        run: databricks bundle run demo_etl_genie_github --target dev
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
+  deploy_prod:
+    name: Deploy to prod
+    runs-on: ubuntu-latest
+    needs:
+      - deploy_dev
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    environment: prod
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Deploy bundle to prod
+        # DABS principle: promote the same artifact through environments with target overrides.
+        run: databricks bundle deploy --target prod
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
+      - name: Run prod pipeline update
+        # Extension point: add approval gates, smoke tests, or notifications before this step.
+        run: databricks bundle run demo_etl_genie_github --target prod
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
