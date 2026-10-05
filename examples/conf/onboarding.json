@@ -4,22 +4,22 @@
     "data_flow_group": "A1",
     "source_format": "cobol",
     "source_details": {
-      "source_path_dev": "/Volumes/main/cobol_demo/landing/customers",
+      "source_path_dev": "/Volumes/fip_poc/fip_poc_sc/landing/customers",
       "copybook_path_dev": "copybooks/customers.cpy"
     },
     "bronze_reader_options": {
       "record_format": "F",
       "schema_retention_policy": "collapse_root"
     },
-    "bronze_catalog_dev": "main",
-    "bronze_database_dev": "cobol_demo",
+    "bronze_catalog_dev": "fip_poc",
+    "bronze_database_dev": "fip_poc_sc",
     "bronze_table": "customers_bronze",
     "bronze_data_quality_expectations_json_dev": "dqe/customers/bronze_data_quality_expectations.json",
-    "bronze_catalog_quarantine_dev": "main",
-    "bronze_database_quarantine_dev": "cobol_demo",
+    "bronze_catalog_quarantine_dev": "fip_poc",
+    "bronze_database_quarantine_dev": "fip_poc_sc",
     "bronze_quarantine_table": "customers_quarantine",
-    "silver_catalog_dev": "main",
-    "silver_database_dev": "cobol_demo",
+    "silver_catalog_dev": "fip_poc",
+    "silver_database_dev": "fip_poc_sc",
     "silver_table": "customers",
     "silver_transformation_json_dev": "silver_transformations.json"
   }
