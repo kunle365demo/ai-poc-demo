@@ -1,5 +1,4 @@
-# Databricks Asset Bundle: onboard -> bronze -> silver as one job on classic compute.
-# Cobrix is a JVM library, so this runs as a job (not a declarative pipeline, not serverless).
+# Databricks Asset Bundle: onboard -> bronze -> silver as one job on serverless compute.
 bundle:
   name: sdp_meta_cobol
 
@@ -9,17 +8,9 @@ variables:
     default: dev
   dataflowspec_table:
     description: Table that stores the dataflow specs
-    default: main.cobol_demo.dataflowspec
+    default: fip_poc.fip_poc_sc.dataflowspec
   data_flow_group:
     default: A1
-  spark_version:
-    description: Must match the Scala version of the Cobrix artifact below
-    default: 15.4.x-scala2.12
-  cobrix_maven:
-    default: za.co.absa.cobrix:spark-cobol_2.12:2.10.6
-  node_type_id:
-    description: Cloud-specific node type (AWS default)
-    default: i3.xlarge
 
 artifacts:
   sdp_meta_cobol:
@@ -36,16 +27,15 @@ resources:
   jobs:
     cobol_ingestion:
       name: sdp-meta COBOL ingestion
-      job_clusters:
-        - job_cluster_key: main
-          new_cluster:
-            spark_version: ${var.spark_version}
-            node_type_id: ${var.node_type_id}
-            num_workers: 1
-            data_security_mode: SINGLE_USER
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "2"
+            dependencies:
+              - ./dist/*.whl
       tasks:
         - task_key: onboard
-          job_cluster_key: main
+          environment_key: default
           python_wheel_task:
             package_name: sdp_meta_cobol
             entry_point: sdp_meta
@@ -54,12 +44,10 @@ resources:
               - --onboarding_file_path=${workspace.file_path}/examples/conf/onboarding.json
               - --env=${var.env}
               - --dataflowspec_table=${var.dataflowspec_table}
-          libraries:
-            - whl: ./dist/*.whl
         - task_key: bronze
           depends_on:
             - task_key: onboard
-          job_cluster_key: main
+          environment_key: default
           python_wheel_task:
             package_name: sdp_meta_cobol
             entry_point: sdp_meta
@@ -68,14 +56,10 @@ resources:
               - --layer=bronze
               - --dataflowspec_table=${var.dataflowspec_table}
               - --group=${var.data_flow_group}
-          libraries:
-            - whl: ./dist/*.whl
-            - maven:
-                coordinates: ${var.cobrix_maven}
         - task_key: silver
           depends_on:
             - task_key: bronze
-          job_cluster_key: main
+          environment_key: default
           python_wheel_task:
             package_name: sdp_meta_cobol
             entry_point: sdp_meta
@@ -84,5 +68,3 @@ resources:
               - --layer=silver
               - --dataflowspec_table=${var.dataflowspec_table}
               - --group=${var.data_flow_group}
-          libraries:
-            - whl: ./dist/*.whl
