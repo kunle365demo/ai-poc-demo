@@ -8,8 +8,7 @@
       "copybook_path_dev": "copybooks/customers.cpy"
     },
     "bronze_reader_options": {
-      "record_format": "F",
-      "schema_retention_policy": "collapse_root"
+      "encoding": "cp037"
     },
     "bronze_catalog_dev": "fip_poc",
     "bronze_database_dev": "fip_poc_sc",

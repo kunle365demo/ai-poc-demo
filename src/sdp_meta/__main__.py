@@ -1,5 +1,5 @@
 # Derived from databrickslabs/sdp-meta (Databricks License, see LICENSE.txt).
-# Modified: reduced to batch-only COBOL (Cobrix) ingestion; see NOTICE.
+# Modified: reduced to batch-only COBOL ingestion; see NOTICE.
 """Wheel entry point: `sdp_meta onboard ...` and `sdp_meta run ...`."""
 import argparse
 import logging
@@ -20,7 +20,7 @@ def main():
 
     logging.basicConfig(level=logging.INFO)
     from pyspark.sql import SparkSession
-    spark = SparkSession.builder.appName(f"sdp-meta-{args.command}").getOrCreate()
+    spark = SparkSession.builder.getOrCreate()
     if args.command == "onboard":
         from sdp_meta.onboard_dataflowspec import onboard_dataflow_specs
         onboard_dataflow_specs(spark, args.onboarding_file_path, args.env, args.dataflowspec_table)

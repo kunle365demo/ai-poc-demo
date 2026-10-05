@@ -1,5 +1,5 @@
 # Derived from databrickslabs/sdp-meta (Databricks License, see LICENSE.txt).
-# Modified: reduced to batch-only COBOL (Cobrix) ingestion; see NOTICE.
+# Modified: reduced to batch-only COBOL ingestion; see NOTICE.
 """Run dataflow specs as batch jobs: read -> transform -> data quality -> write."""
 import json
 import logging
