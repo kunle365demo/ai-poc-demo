@@ -1,5 +1,5 @@
 # Derived from databrickslabs/sdp-meta (Databricks License, see LICENSE.txt).
-# Modified: reduced to batch-only COBOL (Cobrix) ingestion; see NOTICE.
+# Modified: reduced to batch-only COBOL ingestion; see NOTICE.
 """Dataflow spec: one row per (data flow, layer) in the dataflowspec table."""
 from dataclasses import dataclass
 

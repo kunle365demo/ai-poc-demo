@@ -1,19 +1,22 @@
 import json
 import os
 import unittest
+from decimal import Decimal
 from unittest.mock import MagicMock
 
 from sdp_meta.dataflow_pipeline import DataflowPipeline
 from sdp_meta.dataflow_spec import DataflowSpec
 
-COPYBOOK = os.path.join(os.path.dirname(__file__), "..", "examples", "conf", "copybooks", "customers.cpy")
+EXAMPLES = os.path.join(os.path.dirname(__file__), "..", "examples")
+COPYBOOK = os.path.join(EXAMPLES, "conf", "copybooks", "customers.cpy")
+DATA = os.path.join(EXAMPLES, "data")
 
 
 def spec(**overrides):
     fields = dict(
         dataFlowId="100", dataFlowGroup="A1", layer="bronze", sourceFormat="cobol",
-        sourceDetails={"path": "/data/customers", "copybook": COPYBOOK},
-        readerConfigOptions={"record_format": "F"}, targetTable="db.customers_bronze",
+        sourceDetails={"path": DATA, "copybook": COPYBOOK},
+        readerConfigOptions={"encoding": "cp037"}, targetTable="db.customers_bronze",
         quarantineTable=None, selectExp=None, whereClause=None, partitionColumns=None,
         dataQualityExpectations=None, writeMode="overwrite",
     )
@@ -21,17 +24,18 @@ def spec(**overrides):
 
 
 class PipelineTests(unittest.TestCase):
-    def test_bronze_reads_cobol_with_cobrix(self):
+    def test_bronze_reads_cobol_sample_file(self):
         spark = MagicMock()
-        DataflowPipeline(spark, spec()).read()
-        spark.read.format.assert_called_once_with("cobol")
-        reader = spark.read.format.return_value
-        option, contents = reader.option.call_args.args
-        self.assertEqual(option, "copybook_contents")
-        self.assertIn("CUSTOMER-RECORD", contents)
-        reader.option.return_value.options.assert_called_once_with(record_format="F")
-        reader.option.return_value.options.return_value.load.assert_called_once_with("/data/customers")
-        spark.readStream.assert_not_called()
+        df = DataflowPipeline(spark, spec(sourceDetails={"path": DATA, "copybook": COPYBOOK})).read()
+        rows, schema = spark.createDataFrame.call_args.args
+        self.assertIs(df, spark.createDataFrame.return_value)
+        self.assertEqual(schema, "`CUSTOMER_ID` int, `CUSTOMER_NAME` string, `STATE` string, `BALANCE` decimal(9,2)")
+        self.assertEqual(rows, [
+            (1, "ALICE JOHNSON", "TX", Decimal("1250.75")),
+            (2, "BOB SMITH", "IL", Decimal("-42.10")),
+            (3, "CAROL DIAZ", "NY", Decimal("0.00")),
+            (0, "BAD RECORD", "CA", Decimal("10.00")),
+        ])
 
     def test_silver_reads_table_and_transforms(self):
         spark = MagicMock()
@@ -84,7 +88,7 @@ class PipelineTests(unittest.TestCase):
         spark.read.table.assert_called_once_with("db.dataflowspec")
         table.where.assert_called_once_with("layer = 'bronze'")
         table.where.return_value.where.assert_called_once_with("dataFlowGroup = 'A1'")
-        spark.read.format.assert_called_once_with("cobol")
+        spark.createDataFrame.assert_called_once()
 
 
 if __name__ == "__main__":

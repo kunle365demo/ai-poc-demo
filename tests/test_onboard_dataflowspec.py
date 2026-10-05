@@ -17,17 +17,17 @@ class OnboardTests(unittest.TestCase):
 
         self.assertEqual(bronze["layer"], "bronze")
         self.assertEqual(bronze["sourceFormat"], "cobol")
-        self.assertEqual(bronze["sourceDetails"]["path"], "/Volumes/main/cobol_demo/landing/customers")
+        self.assertEqual(bronze["sourceDetails"]["path"], "/Volumes/fip_poc/fip_poc_sc/landing/customers")
         self.assertTrue(os.path.isfile(bronze["sourceDetails"]["copybook"]))
-        self.assertEqual(bronze["readerConfigOptions"]["record_format"], "F")
-        self.assertEqual(bronze["targetTable"], "main.cobol_demo.customers_bronze")
-        self.assertEqual(bronze["quarantineTable"], "main.cobol_demo.customers_quarantine")
+        self.assertEqual(bronze["readerConfigOptions"], {"encoding": "cp037"})
+        self.assertEqual(bronze["targetTable"], "fip_poc.fip_poc_sc.customers_bronze")
+        self.assertEqual(bronze["quarantineTable"], "fip_poc.fip_poc_sc.customers_quarantine")
         self.assertIn("expect_or_drop", bronze["dataQualityExpectations"])
         self.assertEqual(bronze["writeMode"], "overwrite")
 
         self.assertEqual(silver["layer"], "silver")
-        self.assertEqual(silver["sourceDetails"], {"table": "main.cobol_demo.customers_bronze"})
-        self.assertEqual(silver["targetTable"], "main.cobol_demo.customers")
+        self.assertEqual(silver["sourceDetails"], {"table": "fip_poc.fip_poc_sc.customers_bronze"})
+        self.assertEqual(silver["targetTable"], "fip_poc.fip_poc_sc.customers")
         self.assertEqual(silver["selectExp"][0], "CUSTOMER_ID AS customer_id")
         self.assertEqual(silver["whereClause"], ["STATE IS NOT NULL"])
         self.assertIsNone(silver["quarantineTable"])
@@ -43,12 +43,12 @@ class OnboardTests(unittest.TestCase):
 
     def test_onboard_overwrites_spec_table(self):
         spark = MagicMock()
-        specs = onboard_dataflow_specs(spark, ONBOARDING, "dev", "main.cobol_demo.dataflowspec")
+        specs = onboard_dataflow_specs(spark, ONBOARDING, "dev", "fip_poc.fip_poc_sc.dataflowspec")
         spark.createDataFrame.assert_called_once_with(specs, SPEC_SCHEMA)
         writer = spark.createDataFrame.return_value.write
         writer.mode.assert_called_once_with("overwrite")
         writer.mode.return_value.option.return_value.saveAsTable.assert_called_once_with(
-            "main.cobol_demo.dataflowspec")
+            "fip_poc.fip_poc_sc.dataflowspec")
 
 
 if __name__ == "__main__":
