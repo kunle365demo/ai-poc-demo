@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=65"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sdp-meta-cobol"
+version = "0.1.0"
+description = "Stripped-down sdp-meta: metadata-driven batch ingestion of COBOL files with Cobrix"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Databricks License" }
+
+[project.scripts]
+sdp_meta = "sdp_meta.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

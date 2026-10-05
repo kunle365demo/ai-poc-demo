@@ -1,0 +1,11 @@
+{
+  "expect": {
+    "non_negative_balance": "BALANCE >= 0"
+  },
+  "expect_or_drop": {
+    "valid_id": "CUSTOMER_ID IS NOT NULL AND CUSTOMER_ID > 0"
+  },
+  "expect_or_quarantine": {
+    "invalid_id": "CUSTOMER_ID IS NULL OR CUSTOMER_ID <= 0"
+  }
+}

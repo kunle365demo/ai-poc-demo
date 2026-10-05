@@ -1,0 +1,12 @@
+[
+  {
+    "target_table": "customers",
+    "select_exp": [
+      "CUSTOMER_ID AS customer_id",
+      "CUSTOMER_NAME AS customer_name",
+      "STATE AS state",
+      "BALANCE AS balance"
+    ],
+    "where_clause": ["STATE IS NOT NULL"]
+  }
+]

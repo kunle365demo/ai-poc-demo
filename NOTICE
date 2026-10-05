@@ -1,0 +1,9 @@
+This repository is a derivative work of databrickslabs/sdp-meta
+(https://github.com/databrickslabs/sdp-meta, commit 17f5a95), Copyright (2023) Databricks, Inc.,
+distributed under the Databricks License (see LICENSE.txt).
+
+Modifications (October 2026): the framework was reduced to a batch-only core.
+All streaming, Kafka, Event Hubs, Auto Loader, CDC/SCD, append-flow, sink, snapshot,
+CLI, app, MCP, demo and compatibility code was removed; the declarative-pipeline runtime
+was replaced by a batch job runner; and COBOL ingestion through the Cobrix (spark-cobol)
+library was added. Every source file under src/ has been modified or rewritten.
